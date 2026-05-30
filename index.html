@@ -439,6 +439,10 @@
 
     function getSortedLectures(data) {
         return [...data].sort((a, b) => {
+            // 새로 추가된 빈 강의는 정렬 설정과 무관하게 무조건 최상단 고정
+            if (a.isNew && !b.isNew) return -1;
+            if (!a.isNew && b.isNew) return 1;
+
             let valA = a[sortConfig.key] || '';
             let valB = b[sortConfig.key] || '';
 
@@ -513,7 +517,8 @@
     }
 
     function addLectureRow() {
-        lectures.unshift({ id: generateId(), name: "", date: "", duration: "", amount: 0, depositDate: "" });
+        // isNew: true 플래그를 추가하여 상단 고정 트리거
+        lectures.unshift({ id: generateId(), name: "", date: "", duration: "", amount: 0, depositDate: "", isNew: true });
         saveData();
     }
 
@@ -521,6 +526,9 @@
     document.getElementById('lecture-tbody').addEventListener('input', function(e) {
         const tr = e.target.closest('tr'); if (!tr) return;
         const lecture = lectures.find(l => l.id === tr.dataset.id); if (!lecture) return;
+
+        // 입력을 시작하면 '새 항목' 고정 플래그 해제 (입력 중에는 화면이 튀지 않음)
+        if (lecture.isNew) delete lecture.isNew;
 
         if (e.target.classList.contains('input-amount')) {
             let raw = e.target.value.replace(/[^0-9]/g, '');
@@ -537,6 +545,9 @@
     document.getElementById('lecture-tbody').addEventListener('change', function(e) {
         const tr = e.target.closest('tr'); if (!tr) return;
         const lecture = lectures.find(l => l.id === tr.dataset.id); if (!lecture) return;
+
+        // 드롭다운이나 날짜 선택 등 변경 완료 시에도 플래그 해제
+        if (lecture.isNew) delete lecture.isNew;
 
         if (e.target.classList.contains('input-name')) lecture.name = e.target.value;
         if (e.target.classList.contains('input-date')) { lecture.date = e.target.value; saveData(); return; }
