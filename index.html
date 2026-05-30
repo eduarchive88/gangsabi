@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>강사비 및 수당 관리 프로그램</title>
-    <!-- 폰트어썸 (아이콘) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js (통계 그래프) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* 노션 스타일 CSS 변수 */
@@ -26,399 +24,163 @@
             --status-done-text: #0f7b6c;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.5;
-            padding: 40px 20px;
+            background-color: var(--bg-color); color: var(--text-main);
+            line-height: 1.5; padding: 40px 20px;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1200px; margin: 0 auto; }
 
-        /* 헤더 및 탭 */
-        header {
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 20px;
-        }
-
+        header { margin-bottom: 30px; border-bottom: 1px solid var(--border-color); }
+        h1 { font-size: 28px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        .tabs { display: flex; gap: 20px; }
         .tab-btn {
-            background: none;
-            border: none;
-            padding: 10px 4px;
-            font-size: 16px;
-            color: var(--text-sub);
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
-            font-weight: 500;
+            background: none; border: none; padding: 10px 4px; font-size: 16px;
+            color: var(--text-sub); cursor: pointer; border-bottom: 2px solid transparent;
+            transition: all 0.2s ease; font-weight: 500;
         }
+        .tab-btn:hover { color: var(--text-main); }
+        .tab-btn.active { color: var(--text-main); border-bottom-color: var(--text-main); }
 
-        .tab-btn:hover {
-            color: var(--text-main);
-        }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .tab-btn.active {
-            color: var(--text-main);
-            border-bottom-color: var(--text-main);
-        }
-
-        /* 탭 콘텐츠 영역 */
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* 테이블 뷰 (강의 내역 관리) */
-        .toolbar {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-add {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .toolbar { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        
+        .btn-add, .btn-export, .btn-import {
+            border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px;
             transition: background-color 0.2s;
         }
+        .btn-add { background-color: var(--primary-color); color: white; }
+        .btn-add:hover { background-color: #238ebd; }
+        .btn-export, .btn-import { background-color: white; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-export:hover, .btn-import:hover { background-color: var(--hover-bg); }
 
-        .btn-add:hover {
-            background-color: #238ebd;
+        .table-container { overflow-x: visible; border: 1px solid var(--border-color); border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        
+        /* 정렬 가능한 헤더 스타일 */
+        th.sortable {
+            cursor: pointer; user-select: none; transition: background-color 0.2s;
         }
+        th.sortable:hover { background-color: var(--active-bg); color: var(--text-main); }
+        th { font-weight: normal; color: var(--text-sub); font-size: 14px; white-space: nowrap; background-color: #fafafa; }
+        .sort-icon { margin-left: 4px; font-size: 12px; color: #ccc; transition: color 0.2s; }
+        th.sortable.active .sort-icon { color: var(--primary-color); }
 
-        .table-container {
-            overflow-x: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: var(--hover-bg); }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
-
-        th {
-            font-weight: normal;
-            color: var(--text-sub);
-            font-size: 14px;
-            white-space: nowrap;
-            background-color: #fafafa;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover td {
-            background-color: var(--hover-bg);
-        }
-
-        /* 입력 폼 스타일 */
         input[type="text"], input[type="date"], input[type="number"] {
-            width: 100%;
-            border: 1px solid transparent;
-            background: transparent;
-            padding: 6px 8px;
-            font-size: 14px;
-            color: var(--text-main);
-            border-radius: 4px;
-            transition: border-color 0.2s, background-color 0.2s;
-            font-family: inherit;
+            width: 100%; border: 1px solid transparent; background: transparent; padding: 6px 8px;
+            font-size: 14px; color: var(--text-main); border-radius: 4px; transition: all 0.2s; font-family: inherit;
         }
-
-        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            background-color: white;
+        input[type="text"]:focus, input[type="date"]:focus {
+            outline: none; border-color: var(--primary-color); background-color: white;
             box-shadow: 0 0 0 2px rgba(46, 170, 220, 0.2);
         }
 
-        input[type="text"]::placeholder {
-            color: #d3d3d3;
-        }
-
-        /* 셀렉트박스 (연도 필터) */
         .notion-select {
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
-            color: var(--text-main);
-            background-color: white;
-            cursor: pointer;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .notion-select:focus {
-            border-color: var(--primary-color);
+            padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 14px; color: var(--text-main); background-color: white; cursor: pointer; outline: none;
         }
 
-        /* 강의 시간 태그 스타일 */
+        /* 커스텀 태그 및 드롭다운 */
+        .duration-wrapper { position: relative; }
         .tag-input {
-            border-radius: 12px;
-            padding: 4px 10px;
-            display: inline-block;
-            width: auto;
-            min-width: 80px;
-            text-align: center;
-            border: 1px solid transparent;
-            font-weight: 500;
-            transition: all 0.2s;
+            border-radius: 12px; padding: 4px 10px; display: inline-block; width: auto;
+            min-width: 80px; text-align: center; border: 1px solid transparent; font-weight: 500;
         }
+        
+        .duration-dropdown {
+            display: none; position: absolute; top: calc(100% + 4px); left: 0;
+            background: white; border: 1px solid var(--border-color); border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 100; min-width: 160px; max-height: 250px;
+            overflow-y: auto; padding: 6px;
+        }
+        .duration-dropdown.show { display: block; }
+        
+        .dropdown-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 8px; margin-bottom: 2px; border-radius: 4px; cursor: pointer;
+        }
+        .dropdown-item:hover { background-color: var(--hover-bg); }
+        .dropdown-tag {
+            border-radius: 12px; padding: 2px 8px; font-size: 13px; font-weight: 500;
+        }
+        .btn-del-item {
+            background: none; border: none; color: #bbb; cursor: pointer; padding: 4px;
+            border-radius: 4px; font-size: 12px; opacity: 0; transition: all 0.2s;
+        }
+        .dropdown-item:hover .btn-del-item { opacity: 1; }
+        .btn-del-item:hover { color: #e03e3e; background-color: rgba(224, 62, 62, 0.1); }
 
-        /* 상태 뱃지 스타일 */
         .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 500;
-            white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+            border-radius: 12px; font-size: 13px; font-weight: 500; white-space: nowrap;
         }
+        .status-wait { background-color: var(--status-wait-bg); color: var(--status-wait-text); }
+        .status-done { background-color: var(--status-done-bg); color: var(--status-done-text); }
 
-        .status-wait {
-            background-color: var(--status-wait-bg);
-            color: var(--status-wait-text);
-        }
-
-        .status-done {
-            background-color: var(--status-done-bg);
-            color: var(--status-done-text);
-        }
-
-        /* 삭제 버튼 */
         .btn-delete {
-            background: none;
-            border: none;
-            color: #999;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 4px;
-            transition: color 0.2s, background-color 0.2s;
+            background: none; border: none; color: #999; cursor: pointer; padding: 6px;
+            border-radius: 4px; transition: all 0.2s;
         }
+        .btn-delete:hover { color: #e03e3e; background-color: rgba(224, 62, 62, 0.1); }
 
-        .btn-delete:hover {
-            color: #e03e3e;
-            background-color: rgba(224, 62, 62, 0.1);
-        }
-
-        /* 엑셀 백업/복구 버튼 */
-        .btn-export, .btn-import {
-            background-color: white;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: background-color 0.2s;
-        }
-        .btn-export:hover, .btn-import:hover {
-            background-color: var(--hover-bg);
-        }
-
-        /* 모달 & 토스트 (alert 대체용) */
+        /* 토스트 및 모달 */
         .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(50, 50, 50, 0.9);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background-color: rgba(50, 50, 50, 0.9); color: white; padding: 12px 24px;
+            border-radius: 8px; font-size: 14px; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
         .toast.show { opacity: 1; }
-
+        
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-overlay.show { display: flex; }
-        .modal {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            width: 320px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .modal h3 { margin-bottom: 12px; font-size: 18px; color: var(--text-main); }
-        .modal p { color: var(--text-sub); margin-bottom: 20px; font-size: 14px; line-height: 1.4; white-space: pre-line;}
+        .modal { background: white; padding: 24px; border-radius: 12px; width: 320px; }
+        .modal h3 { margin-bottom: 12px; font-size: 18px; }
+        .modal p { color: var(--text-sub); margin-bottom: 20px; font-size: 14px; white-space: pre-line; }
         .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-        .btn-cancel, .btn-confirm {
-            padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 500;
-        }
-        .btn-cancel { background: var(--hover-bg); color: var(--text-main); }
-        .btn-cancel:hover { background: var(--active-bg); }
+        .btn-cancel, .btn-confirm { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; }
+        .btn-cancel { background: var(--hover-bg); }
         .btn-confirm { background: var(--primary-color); color: white; }
-        .btn-confirm:hover { background: #238ebd; }
 
-        /* 통계 대시보드 뷰 */
-        .dashboard {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-        }
-
-        .summary-card {
-            background-color: #fafafa;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .summary-title {
-            font-size: 16px;
-            color: var(--text-sub);
-            margin-bottom: 10px;
-        }
-
-        .summary-amount {
-            font-size: 48px;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
-        }
-
-        .card {
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-
-        .card h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--text-main);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        /* 연도별 리스트 (클릭 가능하도록 수정) */
-        .year-list {
-            list-style: none;
-        }
+        /* 통계 대시보드 */
+        .dashboard { display: flex; flex-direction: column; gap: 30px; }
+        .summary-card { background-color: #fafafa; border: 1px solid var(--border-color); border-radius: 12px; padding: 30px; text-align: center; }
+        .summary-title { font-size: 16px; color: var(--text-sub); margin-bottom: 10px; }
+        .summary-amount { font-size: 48px; font-weight: 700; color: var(--text-main); }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .card { border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; background-color: white; }
+        .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         
+        .year-list { list-style: none; }
         .year-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 16px;
-            margin-bottom: 4px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
+            display: flex; justify-content: space-between; padding: 12px 16px; margin-bottom: 4px;
+            border-radius: 6px; cursor: pointer; transition: background-color 0.2s;
         }
-        
-        .year-item:hover {
-            background-color: var(--hover-bg);
-        }
-
-        .year-item.active {
-            background-color: var(--tag-bg-blue);
-        }
-
-        .year-item.active .year-label, 
-        .year-item.active .year-value {
-            color: var(--tag-text-blue);
-            font-weight: 700;
-        }
-
+        .year-item:hover { background-color: var(--hover-bg); }
+        .year-item.active { background-color: var(--tag-bg-blue); }
+        .year-item.active .year-label, .year-item.active .year-value { color: var(--tag-text-blue); font-weight: 700; }
         .year-label { font-weight: 500; }
         .year-value { font-weight: 600; color: var(--text-sub); }
 
-        /* 금액 컬럼 정렬 */
-        .col-amount { width: 150px; }
-        .col-date { width: 150px; }
+        .col-amount, .col-date { width: 150px; }
         .col-status { width: 120px; text-align: center; }
         .col-action { width: 80px; text-align: center; }
-
-        /* 빈 상태 메시지 */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-sub);
-            font-style: italic;
-        }
-
+        .empty-state { text-align: center; padding: 40px; color: var(--text-sub); font-style: italic; }
     </style>
 </head>
 <body>
@@ -432,7 +194,6 @@
         </div>
     </header>
 
-    <!-- 강의 내역 관리 탭 -->
     <div id="manage-tab" class="tab-content active">
         <div class="toolbar">
             <div class="filter-group">
@@ -441,62 +202,44 @@
                 </select>
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-export" onclick="exportCSV()">
-                    <i class="fa-solid fa-download"></i> 백업(CSV)
-                </button>
+                <button class="btn-export" onclick="exportCSV()"><i class="fa-solid fa-download"></i> 백업(CSV)</button>
                 <label class="btn-import">
                     <i class="fa-solid fa-upload"></i> 복구(CSV)
                     <input type="file" accept=".csv" onchange="importCSV(event)" style="display: none;">
                 </label>
-                <button class="btn-add" onclick="addLectureRow()">
-                    <i class="fa-solid fa-plus"></i> 새 강의 추가
-                </button>
+                <button class="btn-add" onclick="addLectureRow()"><i class="fa-solid fa-plus"></i> 새 강의 추가</button>
             </div>
         </div>
-        
-        <!-- 강의 시간 자동완성 데이터 -->
-        <datalist id="duration-options">
-            <!-- JS로 동적 채워짐 -->
-        </datalist>
 
         <div class="table-container">
             <table id="lecture-table">
                 <thead>
                     <tr>
-                        <th>강의명</th>
-                        <th class="col-date">강의 날짜</th>
-                        <th class="col-date">강의 시간</th>
-                        <th class="col-amount">입금 금액</th>
-                        <th class="col-date">입금 날짜</th>
-                        <th class="col-status">입금 여부</th>
+                        <th class="sortable" onclick="handleSort('name')">강의명 <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="col-date sortable" onclick="handleSort('date')">강의 날짜 <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="col-date sortable" onclick="handleSort('duration')">강의 시간 <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="col-amount sortable" onclick="handleSort('amount')">입금 금액 <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="col-date sortable" onclick="handleSort('depositDate')">입금 날짜 <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="col-status sortable" onclick="handleSort('status')">입금 여부 <i class="fa-solid fa-sort sort-icon"></i></th>
                         <th class="col-action">관리</th>
                     </tr>
                 </thead>
-                <tbody id="lecture-tbody">
-                    <!-- JS로 행이 추가됩니다 -->
-                </tbody>
+                <tbody id="lecture-tbody"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- 수입 통계 탭 -->
     <div id="stats-tab" class="tab-content">
         <div class="dashboard">
             <div class="summary-card">
                 <div class="summary-title">총 누적 수입 (입금 완료 기준)</div>
                 <div class="summary-amount" id="total-income">₩0</div>
             </div>
-
             <div class="dashboard-grid">
-                <!-- 연도별 수입 카드 -->
                 <div class="card">
                     <h3>연도별 수입 내역</h3>
-                    <ul class="year-list" id="yearly-list">
-                        <!-- JS로 채워짐 -->
-                    </ul>
+                    <ul class="year-list" id="yearly-list"></ul>
                 </div>
-
-                <!-- 월별 수입 차트 -->
                 <div class="card">
                     <h3 id="chart-title">월별 수입 (입금 완료 기준)</h3>
                     <div style="position: relative; height:300px; width:100%">
@@ -508,14 +251,12 @@
     </div>
 </div>
 
-<!-- 커스텀 토스트 메시지 -->
 <div id="toast" class="toast">메시지</div>
 
-<!-- 커스텀 모달 (데이터 복구 확인) -->
 <div id="import-modal" class="modal-overlay">
     <div class="modal">
         <h3>데이터 복구</h3>
-        <p id="import-modal-msg">기존 데이터가 덮어쓰기 됩니다. 계속하시겠습니까?</p>
+        <p id="import-modal-msg"></p>
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeModal()">취소</button>
             <button class="btn-confirm" id="btn-import-confirm">복구하기</button>
@@ -528,515 +269,371 @@
     let lectures = [];
     let chartInstance = null;
     let savedDurations = [];
-    let currentFilterYear = 'all'; // 강의 내역 관리 탭의 연도 필터 상태
-    let selectedStatYear = 'all';  // 수입 통계 탭의 연도 선택 상태
+    let currentFilterYear = 'all';
+    let selectedStatYear = 'all';
+    
+    // 정렬 상태
+    let sortConfig = { key: 'date', direction: 'desc' };
 
-    // 해시 기반 색상 팔레트 (다양한 태그 색상 제공)
-    const tagColors = [
-        { bg: 'rgba(224, 62, 62, 0.15)', text: '#d43636' },   // Red
-        { bg: 'rgba(217, 115, 13, 0.15)', text: '#cc6d0c' },  // Orange
-        { bg: 'rgba(223, 171, 1, 0.15)', text: '#cca000' },   // Yellow
-        { bg: 'rgba(15, 123, 108, 0.15)', text: '#0f7b6c' },  // Green
-        { bg: 'rgba(46, 170, 220, 0.15)', text: '#2eaadc' },  // Blue
-        { bg: 'rgba(105, 64, 165, 0.15)', text: '#6940a5' }   // Purple
+    // 완전히 구분되는 10가지 프리셋 컬러 (노션 스타일)
+    const presetColors = [
+        { bg: 'rgba(46, 170, 220, 0.15)', text: '#2eaadc' }, // Blue
+        { bg: 'rgba(224, 62, 62, 0.15)',  text: '#d43636' }, // Red
+        { bg: 'rgba(15, 123, 108, 0.15)', text: '#0f7b6c' }, // Green
+        { bg: 'rgba(217, 115, 13, 0.15)', text: '#cc6d0c' }, // Orange
+        { bg: 'rgba(105, 64, 165, 0.15)', text: '#6940a5' }, // Purple
+        { bg: 'rgba(223, 171, 1, 0.15)',  text: '#cca000' }, // Yellow
+        { bg: 'rgba(199, 21, 133, 0.15)', text: '#c71585' }, // Pink
+        { bg: 'rgba(160, 64, 0, 0.15)',   text: '#a04000' }, // Brown
+        { bg: 'rgba(31, 111, 159, 0.15)', text: '#1f6f9f' }, // Dark Blue
+        { bg: 'rgba(85, 85, 85, 0.15)',   text: '#555555' }  // Gray
     ];
 
-    // 초기 데이터 로드
+    let durationColorMap = {}; 
+    let colorIndexCounter = 0;
+
     function init() {
         const storedData = localStorage.getItem('lecturesData');
-        if (storedData) {
-            lectures = JSON.parse(storedData);
-        } else {
-            // 데모 데이터 (처음 실행 시)
+        if (storedData) lectures = JSON.parse(storedData);
+        else {
             lectures = [
-                { id: generateId(), name: "기업 신입사원 OJT 교육", date: "2023-10-15", duration: "4시간", amount: 400000, depositDate: "2023-10-25" },
-                { id: generateId(), name: "대학교 진로 특강", date: "2023-11-02", duration: "2시간", amount: 250000, depositDate: "2023-11-05" },
-                { id: generateId(), name: "2024년 관리자 리더십 워크샵", date: "2024-03-10", duration: "8시간", amount: 1000000, depositDate: "2024-03-15" }
+                { id: generateId(), name: "기업 신입사원 교육", date: "2024-03-10", duration: "8시간", amount: 1000000, depositDate: "2024-03-15" }
             ];
             saveData();
         }
+        initColors();
         initDurations();
         renderTable();
     }
 
-    // 데이터 저장
+    function generateId() { return Math.random().toString(36).substr(2, 9); }
+    function formatCurrency(num) { return !num ? '₩0' : '₩' + num.toLocaleString('ko-KR'); }
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg; toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // --- 색상 고정 매핑 로직 ---
+    function initColors() {
+        const stored = localStorage.getItem('durationColorMap');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            durationColorMap = parsed.map || {};
+            colorIndexCounter = parsed.counter || 0;
+        }
+    }
+    function saveColors() {
+        localStorage.setItem('durationColorMap', JSON.stringify({ map: durationColorMap, counter: colorIndexCounter }));
+    }
+    function getTagStyle(text) {
+        if (!text) return { bg: 'var(--hover-bg)', text: 'var(--text-sub)' };
+        if (durationColorMap[text] === undefined) {
+            durationColorMap[text] = colorIndexCounter % presetColors.length;
+            colorIndexCounter++;
+            saveColors();
+        }
+        return presetColors[durationColorMap[text]];
+    }
+
+    // --- 동적 강의 시간 (드롭다운) 로직 ---
+    function initDurations() {
+        const stored = localStorage.getItem('durationsData');
+        if (stored) savedDurations = JSON.parse(stored);
+        else {
+            savedDurations = ['1시간', '2시간', '3시간', '4시간', '8시간'];
+            localStorage.setItem('durationsData', JSON.stringify(savedDurations));
+        }
+    }
+    function addCustomDuration(val) {
+        if (val && !savedDurations.includes(val)) {
+            savedDurations.push(val);
+            localStorage.setItem('durationsData', JSON.stringify(savedDurations));
+        }
+    }
+    function deleteCustomDuration(val) {
+        savedDurations = savedDurations.filter(d => d !== val);
+        localStorage.setItem('durationsData', JSON.stringify(savedDurations));
+    }
+
+    // 드롭다운 렌더링
+    function getDropdownHTML() {
+        if (savedDurations.length === 0) return `<div style="padding:10px; text-align:center; color:#999; font-size:12px;">저장된 시간이 없습니다</div>`;
+        return savedDurations.map(d => {
+            const style = getTagStyle(d);
+            return `
+                <div class="dropdown-item" data-value="${d}">
+                    <span class="dropdown-tag" style="background-color:${style.bg}; color:${style.text};">${d}</span>
+                    <button class="btn-del-item" title="목록에서 삭제"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 드롭다운 이벤트 처리 (문서 전역)
+    document.addEventListener('focusin', function(e) {
+        if (e.target.classList.contains('input-duration')) {
+            document.querySelectorAll('.duration-dropdown').forEach(d => d.classList.remove('show'));
+            const wrapper = e.target.closest('.duration-wrapper');
+            const dropdown = wrapper.querySelector('.duration-dropdown');
+            dropdown.innerHTML = getDropdownHTML();
+            dropdown.classList.add('show');
+        }
+    });
+
+    document.addEventListener('mousedown', function(e) {
+        const dropdown = e.target.closest('.duration-dropdown');
+        if (dropdown) {
+            e.preventDefault(); // input 포커스 잃지 않게 방지
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                const text = item.dataset.value;
+                const isDelete = e.target.closest('.btn-del-item');
+                
+                if (isDelete) {
+                    if(confirm(`'${text}' 항목을 목록에서 영구 삭제하시겠습니까?\n(기존 입력된 강의 내역은 유지됩니다)`)) {
+                        deleteCustomDuration(text);
+                        dropdown.innerHTML = getDropdownHTML(); // 드롭다운 즉시 리렌더링
+                    }
+                } else {
+                    const input = dropdown.previousElementSibling;
+                    input.value = text;
+                    input.dispatchEvent(new Event('change', { bubbles: true })); // 저장 트리거
+                    dropdown.classList.remove('show');
+                }
+            }
+        } else if (!e.target.classList.contains('input-duration')) {
+            document.querySelectorAll('.duration-dropdown').forEach(d => d.classList.remove('show'));
+        }
+    });
+
+    // --- 정렬 로직 ---
+    function handleSort(key) {
+        if (sortConfig.key === key) {
+            sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortConfig.key = key;
+            sortConfig.direction = 'asc';
+        }
+        updateSortIcons();
+        renderTable();
+    }
+
+    function updateSortIcons() {
+        document.querySelectorAll('th.sortable').forEach(th => {
+            th.classList.remove('active');
+            th.querySelector('.sort-icon').className = 'fa-solid fa-sort sort-icon';
+        });
+        
+        // 클릭한 컬럼 아이콘 업데이트
+        const ths = document.querySelectorAll('th.sortable');
+        const keys = ['name', 'date', 'duration', 'amount', 'depositDate', 'status'];
+        const index = keys.indexOf(sortConfig.key);
+        if(index !== -1) {
+            ths[index].classList.add('active');
+            ths[index].querySelector('.sort-icon').className = sortConfig.direction === 'asc' 
+                ? 'fa-solid fa-sort-up sort-icon' 
+                : 'fa-solid fa-sort-down sort-icon';
+        }
+    }
+
+    function getSortedLectures(data) {
+        return [...data].sort((a, b) => {
+            let valA = a[sortConfig.key] || '';
+            let valB = b[sortConfig.key] || '';
+
+            if (sortConfig.key === 'amount') { valA = Number(valA); valB = Number(valB); }
+            if (sortConfig.key === 'status') { valA = a.depositDate ? 1 : 0; valB = b.depositDate ? 1 : 0; }
+
+            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    // --- 탭 및 데이터 렌더링 ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+        if (tabId === 'stats') renderStatistics();
+    }
+
     function saveData() {
         localStorage.setItem('lecturesData', JSON.stringify(lectures));
         renderTable();
     }
 
-    // 고유 ID 생성
-    function generateId() {
-        return Math.random().toString(36).substr(2, 9);
-    }
+    function changeYearFilter(year) { currentFilterYear = year; renderTable(); }
 
-    // 숫자 -> 화폐 포맷팅 (₩1,000,000)
-    function formatCurrency(num) {
-        if (!num) return '₩0';
-        return '₩' + num.toLocaleString('ko-KR');
-    }
-
-    // --- 동적 강의 시간 (태그) 로직 ---
-    function initDurations() {
-        const stored = localStorage.getItem('durationsData');
-        if (stored) {
-            savedDurations = JSON.parse(stored);
-        } else {
-            savedDurations = ['1시간', '2시간', '3시간', '4시간', '8시간'];
-            localStorage.setItem('durationsData', JSON.stringify(savedDurations));
-        }
-        renderDatalist();
-    }
-
-    function renderDatalist() {
-        const dl = document.getElementById('duration-options');
-        dl.innerHTML = savedDurations.map(d => `<option value="${d}">`).join('');
-    }
-
-    function addCustomDuration(val) {
-        if (val && !savedDurations.includes(val)) {
-            savedDurations.push(val);
-            localStorage.setItem('durationsData', JSON.stringify(savedDurations));
-            renderDatalist();
-        }
-    }
-
-    // 글자를 바탕으로 고정된 해시 색상 반환
-    function getTagStyle(text) {
-        if (!text) return { bg: 'var(--hover-bg)', text: 'var(--text-sub)' };
-        let hash = 0;
-        for (let i = 0; i < text.length; i++) {
-            hash = text.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const index = Math.abs(hash) % tagColors.length;
-        return tagColors[index];
-    }
-
-    // --- 2. 탭 전환 로직 ---
-    function switchTab(tabId) {
-        // 버튼 활성화 처리
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
-        // 콘텐츠 표시 처리
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(`${tabId}-tab`).classList.add('active');
-
-        // 통계 탭일 경우 차트 렌더링
-        if (tabId === 'stats') {
-            renderStatistics();
-        }
-    }
-
-    // --- 3. [강의 내역 관리] 로직 ---
-
-    // 연도 필터링 옵션 렌더링
-    function renderYearFilterOptions() {
-        const select = document.getElementById('year-filter');
-        const years = new Set();
-        lectures.forEach(l => {
-            if (l.date) years.add(l.date.substring(0, 4));
-        });
-        const sortedYears = Array.from(years).sort((a, b) => b - a);
-        
-        select.innerHTML = `<option value="all">전체 연도</option>` +
-            sortedYears.map(y => `<option value="${y}" ${y === currentFilterYear ? 'selected' : ''}>${y}년</option>`).join('');
-    }
-
-    // 연도 필터 변경
-    function changeYearFilter(year) {
-        currentFilterYear = year;
-        renderTable();
-    }
-
-    // 테이블 렌더링
     function renderTable() {
-        renderYearFilterOptions();
+        const select = document.getElementById('year-filter');
+        const years = new Set(lectures.map(l => l.date ? l.date.substring(0, 4) : null).filter(Boolean));
+        const sortedYears = Array.from(years).sort((a, b) => b - a);
+        select.innerHTML = `<option value="all">전체 연도</option>` + sortedYears.map(y => `<option value="${y}" ${y === currentFilterYear ? 'selected' : ''}>${y}년</option>`).join('');
 
         const tbody = document.getElementById('lecture-tbody');
         tbody.innerHTML = '';
 
-        let filteredLectures = lectures;
-        if (currentFilterYear !== 'all') {
-            filteredLectures = lectures.filter(l => l.date && l.date.substring(0, 4) === currentFilterYear);
-        }
+        let filtered = lectures;
+        if (currentFilterYear !== 'all') filtered = lectures.filter(l => l.date && l.date.substring(0, 4) === currentFilterYear);
+        
+        filtered = getSortedLectures(filtered); // 정렬 적용
 
-        if (filteredLectures.length === 0) {
+        if (filtered.length === 0) {
             tbody.innerHTML = `<tr><td colspan="7" class="empty-state">등록된 강의 내역이 없습니다.</td></tr>`;
             return;
         }
 
-        filteredLectures.forEach(lecture => {
+        filtered.forEach(lecture => {
             const tr = document.createElement('tr');
             tr.dataset.id = lecture.id;
-
-            // 상태 결정
             const isDone = !!lecture.depositDate;
-            const statusHtml = isDone 
-                ? `<span class="status-badge status-done"><i class="fa-solid fa-check"></i> 완료</span>`
-                : `<span class="status-badge status-wait">대기</span>`;
-
-            // 태그 색상 결정
+            const statusHtml = isDone ? `<span class="status-badge status-done"><i class="fa-solid fa-check"></i> 완료</span>` : `<span class="status-badge status-wait">대기</span>`;
             const tagStyle = getTagStyle(lecture.duration);
 
             tr.innerHTML = `
+                <td><input type="text" placeholder="강의명 입력" class="input-name" value="${lecture.name || ''}"></td>
+                <td><input type="date" class="input-date" value="${lecture.date || ''}"></td>
                 <td>
-                    <input type="text" placeholder="강의명을 입력하세요" class="input-name" value="${lecture.name || ''}">
+                    <div class="duration-wrapper">
+                        <input type="text" class="tag-input input-duration" placeholder="직접 입력" autocomplete="off" value="${lecture.duration || ''}" style="background-color: ${tagStyle.bg}; color: ${tagStyle.text};">
+                        <div class="duration-dropdown"></div>
+                    </div>
                 </td>
-                <td>
-                    <input type="date" class="input-date" value="${lecture.date || ''}">
-                </td>
-                <td>
-                    <input type="text" list="duration-options" class="tag-input input-duration" placeholder="2시간" value="${lecture.duration || ''}" style="background-color: ${tagStyle.bg}; color: ${tagStyle.text};">
-                </td>
-                <td>
-                    <input type="text" class="currency-input input-amount" placeholder="₩0" value="${formatCurrency(lecture.amount)}">
-                </td>
-                <td>
-                    <input type="date" class="input-deposit-date" value="${lecture.depositDate || ''}">
-                </td>
-                <td class="col-status">
-                    ${statusHtml}
-                </td>
-                <td class="col-action">
-                    <button class="btn-delete" title="삭제"><i class="fa-solid fa-trash"></i></button>
-                </td>
+                <td><input type="text" class="currency-input input-amount" placeholder="₩0" value="${formatCurrency(lecture.amount)}"></td>
+                <td><input type="date" class="input-deposit-date" value="${lecture.depositDate || ''}"></td>
+                <td class="col-status">${statusHtml}</td>
+                <td class="col-action"><button class="btn-delete" title="삭제"><i class="fa-solid fa-trash"></i></button></td>
             `;
             tbody.appendChild(tr);
         });
+        updateSortIcons();
     }
 
-    // 새 강의 추가
     function addLectureRow() {
-        const newLecture = {
-            id: generateId(),
-            name: "",
-            date: "",
-            duration: "",
-            amount: 0,
-            depositDate: ""
-        };
-        lectures.unshift(newLecture); // 새로운 항목을 가장 위에 추가
+        lectures.unshift({ id: generateId(), name: "", date: "", duration: "", amount: 0, depositDate: "" });
         saveData();
     }
 
-    // 이벤트 위임을 통한 테이블 내 Input 및 버튼 처리
+    // Input 이벤트 위임
     document.getElementById('lecture-tbody').addEventListener('input', function(e) {
-        const tr = e.target.closest('tr');
-        if (!tr) return;
-        const id = tr.dataset.id;
-        const lecture = lectures.find(l => l.id === id);
-        if (!lecture) return;
+        const tr = e.target.closest('tr'); if (!tr) return;
+        const lecture = lectures.find(l => l.id === tr.dataset.id); if (!lecture) return;
 
-        // 금액 입력 필드 실시간 포맷팅 처리
         if (e.target.classList.contains('input-amount')) {
-            let rawValue = e.target.value.replace(/[^0-9]/g, '');
-            if (rawValue) {
-                e.target.value = '₩' + parseInt(rawValue, 10).toLocaleString('ko-KR');
-                lecture.amount = parseInt(rawValue, 10);
-            } else {
-                e.target.value = '';
-                lecture.amount = 0;
-            }
+            let raw = e.target.value.replace(/[^0-9]/g, '');
+            e.target.value = raw ? '₩' + parseInt(raw, 10).toLocaleString('ko-KR') : '';
+            lecture.amount = raw ? parseInt(raw, 10) : 0;
             localStorage.setItem('lecturesData', JSON.stringify(lectures));
-            return;
         }
-
-        // 강의 시간 텍스트 입력 시 태그 색상 즉각 반영
         if (e.target.classList.contains('input-duration')) {
-            const tagStyle = getTagStyle(e.target.value);
-            e.target.style.backgroundColor = tagStyle.bg;
-            e.target.style.color = tagStyle.text;
+            const style = getTagStyle(e.target.value);
+            e.target.style.backgroundColor = style.bg; e.target.style.color = style.text;
         }
     });
 
-    // change 이벤트 (입력이 끝나거나 날짜를 선택했을 때 상태 업데이트)
     document.getElementById('lecture-tbody').addEventListener('change', function(e) {
-        const tr = e.target.closest('tr');
-        if (!tr) return;
-        const id = tr.dataset.id;
-        const lecture = lectures.find(l => l.id === id);
-        if (!lecture) return;
+        const tr = e.target.closest('tr'); if (!tr) return;
+        const lecture = lectures.find(l => l.id === tr.dataset.id); if (!lecture) return;
 
         if (e.target.classList.contains('input-name')) lecture.name = e.target.value;
-        if (e.target.classList.contains('input-date')) {
-            lecture.date = e.target.value;
-            saveData();
-            return;
-        }
+        if (e.target.classList.contains('input-date')) { lecture.date = e.target.value; saveData(); return; }
         if (e.target.classList.contains('input-duration')) {
             lecture.duration = e.target.value;
             addCustomDuration(e.target.value);
         }
-        if (e.target.classList.contains('input-deposit-date')) {
-            lecture.depositDate = e.target.value;
-            saveData();
-            return; 
-        }
-
+        if (e.target.classList.contains('input-deposit-date')) { lecture.depositDate = e.target.value; saveData(); return; }
         localStorage.setItem('lecturesData', JSON.stringify(lectures));
     });
 
-    // 삭제 버튼 처리
     document.getElementById('lecture-tbody').addEventListener('click', function(e) {
-        const deleteBtn = e.target.closest('.btn-delete');
-        if (deleteBtn) {
-            const tr = deleteBtn.closest('tr');
-            const id = tr.dataset.id;
-            if(confirm("정말 이 내역을 삭제하시겠습니까?")) {
-                lectures = lectures.filter(l => l.id !== id);
-                saveData();
-            }
+        const btn = e.target.closest('.btn-delete');
+        if (btn && confirm("정말 삭제하시겠습니까?")) {
+            lectures = lectures.filter(l => l.id !== btn.closest('tr').dataset.id);
+            saveData();
         }
     });
 
-
-    // --- 4. [수입 통계] 로직 ---
-
+    // --- 통계 및 CSV 로직 ---
     function renderStatistics() {
-        const completedLectures = lectures.filter(l => l.depositDate && l.amount > 0);
+        const completed = lectures.filter(l => l.depositDate && l.amount > 0);
+        const total = completed.reduce((sum, l) => sum + l.amount, 0);
+        document.getElementById('total-income').textContent = formatCurrency(total);
 
-        // 1. 총 누적 수입
-        const totalIncome = completedLectures.reduce((sum, current) => sum + current.amount, 0);
-        document.getElementById('total-income').textContent = formatCurrency(totalIncome);
-
-        // 2. 연도별 수입 집계
         const yearlyData = {};
-        completedLectures.forEach(l => {
-            const year = l.depositDate.substring(0, 4);
-            yearlyData[year] = (yearlyData[year] || 0) + l.amount;
+        completed.forEach(l => {
+            const y = l.depositDate.substring(0, 4);
+            yearlyData[y] = (yearlyData[y] || 0) + l.amount;
         });
 
-        const yearlyListEl = document.getElementById('yearly-list');
-        yearlyListEl.innerHTML = '';
+        const listEl = document.getElementById('yearly-list'); listEl.innerHTML = '';
+        const sorted = Object.keys(yearlyData).sort((a, b) => b - a);
         
-        const sortedYears = Object.keys(yearlyData).sort((a, b) => b - a);
-        
-        // '전체 기간' 리스트 아이템 추가
-        const allItem = document.createElement('li');
-        allItem.className = `year-item ${selectedStatYear === 'all' ? 'active' : ''}`;
-        allItem.innerHTML = `<span class="year-label">전체 기간</span> <span class="year-value">${formatCurrency(totalIncome)}</span>`;
-        allItem.onclick = () => {
-            selectedStatYear = 'all';
-            renderStatistics();
-        };
-        yearlyListEl.appendChild(allItem);
-
-        // 각 연도별 리스트 아이템 추가
-        sortedYears.forEach(year => {
-            const li = document.createElement('li');
-            li.className = `year-item ${selectedStatYear === year ? 'active' : ''}`;
-            li.innerHTML = `<span class="year-label">${year}년</span> <span class="year-value">${formatCurrency(yearlyData[year])}</span>`;
-            li.onclick = () => {
-                selectedStatYear = year;
-                renderStatistics();
-            };
-            yearlyListEl.appendChild(li);
+        listEl.innerHTML += `<li class="year-item ${selectedStatYear === 'all' ? 'active' : ''}" onclick="selectedStatYear='all'; renderStatistics();"><span class="year-label">전체 기간</span><span class="year-value">${formatCurrency(total)}</span></li>`;
+        sorted.forEach(y => {
+            listEl.innerHTML += `<li class="year-item ${selectedStatYear === y ? 'active' : ''}" onclick="selectedStatYear='${y}'; renderStatistics();"><span class="year-label">${y}년</span><span class="year-value">${formatCurrency(yearlyData[y])}</span></li>`;
         });
 
-        // 3. 월별 수입 차트 데이터 생성
-        // 타이틀 동적 변경
-        const chartTitleEl = document.getElementById('chart-title');
-        if (selectedStatYear === 'all') {
-            chartTitleEl.textContent = '전체 기간 월별 수입 합계 (입금 완료 기준)';
-        } else {
-            chartTitleEl.textContent = `${selectedStatYear}년 월별 수입 (입금 완료 기준)`;
-        }
-
-        const monthlyData = new Array(12).fill(0);
-
-        completedLectures.forEach(l => {
-            const year = l.depositDate.substring(0, 4);
-            const month = parseInt(l.depositDate.substring(5, 7), 10) - 1; // 0-based
-            
-            // 필터: 전체 기간이거나 선택한 연도와 일치할 때 누적
-            if (selectedStatYear === 'all' || selectedStatYear === year) {
-                monthlyData[month] += l.amount;
+        document.getElementById('chart-title').textContent = selectedStatYear === 'all' ? '전체 기간 월별 수입 합계' : `${selectedStatYear}년 월별 수입`;
+        const monthly = new Array(12).fill(0);
+        completed.forEach(l => {
+            const y = l.depositDate.substring(0, 4);
+            if (selectedStatYear === 'all' || selectedStatYear === y) {
+                monthly[parseInt(l.depositDate.substring(5, 7), 10) - 1] += l.amount;
             }
         });
 
-        drawChart(monthlyData);
-    }
-
-    function drawChart(dataArray) {
-        const ctx = document.getElementById('monthlyChart').getContext('2d');
-        
-        if (chartInstance) {
-            chartInstance.destroy();
-        }
-
-        chartInstance = new Chart(ctx, {
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
             type: 'bar',
-            data: {
-                labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
-                datasets: [{
-                    label: '월별 입금액',
-                    data: dataArray,
-                    backgroundColor: 'rgba(46, 170, 220, 0.6)',
-                    borderColor: 'rgba(46, 170, 220, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₩' + value.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return '₩' + context.raw.toLocaleString();
-                            }
-                        }
-                    },
-                    legend: {
-                        display: false 
-                    }
-                }
-            }
+            data: { labels: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'], datasets: [{ label: '월별 입금액', data: monthly, backgroundColor: 'rgba(46, 170, 220, 0.6)', borderColor: 'rgba(46, 170, 220, 1)', borderWidth: 1, borderRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: v => '₩' + v.toLocaleString() } } }, plugins: { tooltip: { callbacks: { label: c => '₩' + c.raw.toLocaleString() } }, legend: { display: false } } }
         });
     }
 
-    // --- 5. 백업(Excel/CSV) 및 복구 로직 ---
-
-    // 알림 메시지 띄우기
-    function showToast(msg) {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
-    let pendingImportData = null;
-
-    // 모달 닫기
-    function closeModal() {
-        document.getElementById('import-modal').classList.remove('show');
-        pendingImportData = null;
-    }
-
-    // CSV 파일로 다운로드 (엑셀에서 열람 가능)
     function exportCSV() {
-        if (lectures.length === 0) {
-            showToast("백업할 데이터가 없습니다.");
-            return;
-        }
-
-        // CSV 헤더 + 한글 깨짐 방지용 BOM(Byte Order Mark)
-        let csvContent = '\uFEFF'; 
-        csvContent += "ID,강의명,강의 날짜,강의 시간,입금 금액,입금 날짜\n";
-
-        lectures.forEach(l => {
-            // 이름에 콤마(,)가 포함되어 있으면 CSV 구조가 깨지므로 쌍따옴표로 감싸줌
-            const name = `"${(l.name || '').replace(/"/g, '""')}"`;
-            const date = l.date || '';
-            const duration = l.duration || '';
-            const amount = l.amount || 0;
-            const depositDate = l.depositDate || '';
-            
-            csvContent += `${l.id},${name},${date},${duration},${amount},${depositDate}\n`;
-        });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        if (!lectures.length) return showToast("백업할 데이터가 없습니다.");
+        let csv = '\uFEFFID,강의명,강의 날짜,강의 시간,입금 금액,입금 날짜\n';
+        lectures.forEach(l => csv += `${l.id},"${(l.name||'').replace(/"/g, '""')}",${l.date||''},${l.duration||''},${l.amount||0},${l.depositDate||''}\n`);
         const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        
-        const today = new Date().toISOString().split('T')[0];
-        link.setAttribute("href", url);
-        link.setAttribute("download", `강의수당백업_${today}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        showToast("데이터 백업이 완료되었습니다.");
+        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        link.download = `강의수당백업_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click(); showToast("백업 완료!");
     }
 
-    // CSV 파일 복구 (덮어쓰기)
+    let pendingImport = null;
+    function closeModal() { document.getElementById('import-modal').classList.remove('show'); pendingImport = null; }
+    
     function importCSV(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
+        const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            const text = e.target.result;
-            const rows = text.split('\n').filter(row => row.trim() !== '');
+            const rows = e.target.result.split('\n').filter(r => r.trim());
+            if (rows.length < 2) { showToast("유효한 데이터가 없습니다."); event.target.value = ''; return; }
             
-            if (rows.length < 2) {
-                showToast("유효한 데이터가 없습니다.");
-                event.target.value = '';
-                return;
-            }
-
-            const importedLectures = [];
-            
-            // 첫 줄(헤더)을 제외하고 파싱 시작
+            pendingImport = [];
             for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                // 쌍따옴표 내부의 콤마를 무시하고 컬럼을 분리하는 정규식
-                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => {
-                    let c = col.trim();
-                    if (c.startsWith('"') && c.endsWith('"')) {
-                        c = c.slice(1, -1).replace(/""/g, '"');
-                    }
-                    return c;
-                });
-
-                if (cols.length >= 5) {
-                    importedLectures.push({
-                        id: cols[0] || generateId(),
-                        name: cols[1] || '',
-                        date: cols[2] || '',
-                        duration: cols[3] || '',
-                        amount: parseInt(cols[4], 10) || 0,
-                        depositDate: cols[5] || ''
-                    });
-                }
+                const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+                if (cols.length >= 5) pendingImport.push({ id: cols[0] || generateId(), name: cols[1] || '', date: cols[2] || '', duration: cols[3] || '', amount: parseInt(cols[4], 10) || 0, depositDate: cols[5] || '' });
             }
-
-            // 모달을 띄워 사용자 확인 받기
-            pendingImportData = importedLectures;
-            document.getElementById('import-modal-msg').textContent = `총 ${importedLectures.length}건의 데이터를 복구하시겠습니까?\n기존 데이터는 삭제되고 덮어쓰기 됩니다.`;
+            document.getElementById('import-modal-msg').textContent = `총 ${pendingImport.length}건 복구 시 기존 데이터는 삭제됩니다.`;
             document.getElementById('import-modal').classList.add('show');
-            
             document.getElementById('btn-import-confirm').onclick = () => {
-                if (pendingImportData) {
-                    lectures = pendingImportData;
-                    saveData();
-                    // 복구된 데이터 안의 새로운 강의 시간들을 드롭다운 옵션에 병합
-                    lectures.forEach(l => {
-                        if(l.duration) addCustomDuration(l.duration);
-                    });
-                    
-                    if (currentFilterYear !== 'all') {
-                        changeYearFilter('all'); // 필터 초기화
-                    }
-                    
-                    showToast("성공적으로 복구되었습니다.");
-                    closeModal();
+                if (pendingImport) {
+                    lectures = pendingImport; saveData();
+                    lectures.forEach(l => l.duration && addCustomDuration(l.duration));
+                    if (currentFilterYear !== 'all') changeYearFilter('all');
+                    showToast("성공적으로 복구되었습니다."); closeModal();
                 }
             };
-
-            // 동일한 파일을 다시 선택할 수 있게 input 값 초기화
             event.target.value = '';
         };
-        
         reader.readAsText(file, 'utf-8');
     }
 
-    // 앱 실행
     window.addEventListener('DOMContentLoaded', init);
-
 </script>
 </body>
 </html>
